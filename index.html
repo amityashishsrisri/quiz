@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quick Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: friendly, quick, classroom-clear.
+   IDEA: an answer sheet handed out at the door, marked in coloured pencil.
+   PICTURE: the quiz itself, one calm column; answers go to Formspree.
+   COLOUR and TYPE: indigo ink on white paper, coral pencil accent, mint for correct. Outfit + Inter.
+   LAYOUT: one column up to 720px for the quiz; wide table for responses. */
+:root{color-scheme:light dark;
+--bg:light-dark(#eef0fb,#0d1024);--paper:light-dark(#ffffff,#171b36);--ink:light-dark(#151a3d,#e9ebff);
+--soft:light-dark(#5b6190,#a5aad6);--line:light-dark(#dcdff2,#2a2f55);--brand:light-dark(#3446d4,#8f9bff);
+--accent:light-dark(#ff5a36,#ff7a5c);--ok:light-dark(#0f8a5f,#4fd19e);--okbg:light-dark(#e3f7ee,#123526);
+--bad:light-dark(#c4322a,#ff8a80);--badbg:light-dark(#fdebea,#3a1717)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:Outfit,Inter,sans-serif;line-height:1.1;margin:0;text-wrap:balance}
+h1{font-size:clamp(32px,6vw,46px);font-weight:800}
+h2{font-size:22px;font-weight:700}
+.top{background:var(--brand);color:#fff;padding:clamp(28px,5vw,56px) max(5vw,16px) clamp(56px,7vw,84px)}
+.top p{margin:8px 0 0;opacity:.9;max-width:60ch}
+.wrap{max-width:720px;margin:0 auto}
+.wide{max-width:1240px;margin:0 auto}
+main{padding:0 max(5vw,16px) 64px;margin-top:-44px}
+.sheet{background:var(--paper);border-radius:18px;box-shadow:0 1px 0 var(--line),0 18px 40px -24px rgba(20,26,80,.45);padding:clamp(20px,4vw,36px)}
+.sec{font:600 14px Inter,sans-serif;color:var(--accent);margin:28px 0 4px}
+.q{padding:18px 0;border-top:1px solid var(--line)}
+.q:first-of-type{border-top:0}
+.qt{font-weight:600;font-size:17px;margin:0 0 12px;display:flex;gap:10px}
+.qt b{flex:none;width:28px;height:28px;border-radius:50%;background:var(--bg);color:var(--brand);display:grid;place-items:center;font:700 14px Outfit,sans-serif}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.opt{position:relative}
+.opt input{position:absolute;opacity:0;inset:0;margin:0}
+.opt span{display:flex;align-items:center;min-height:48px;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .15s,background .15s}
+.opt input:checked+span{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 10%,transparent);font-weight:600}
+.opt input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+label.f{display:block;font-weight:600;margin-bottom:6px}
+input[type=text]{width:100%;font:16px Inter,sans-serif;padding:12px 14px;min-height:48px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink)}
+input[type=text]:focus-visible{outline:3px solid var(--accent);outline-offset:1px;border-color:var(--brand)}
+.blank{display:inline-block;width:5em;border-bottom:2px solid var(--soft);margin:0 4px}
+button{font:600 16px Inter,sans-serif;min-height:48px;padding:0 22px;border-radius:12px;border:0;cursor:pointer}
+.go{background:var(--accent);color:#fff;width:100%;margin-top:20px;font-size:17px}
+.go:disabled{opacity:.6;cursor:wait}
+.ghost{background:transparent;color:var(--brand);border:1.5px solid var(--line)}
+button:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.err{color:var(--bad);font-weight:600;margin:10px 0 0;min-height:1.5em}
+.done{text-align:center;padding:24px 0}
+.score{font:800 clamp(56px,14vw,96px)/1 Outfit,sans-serif;color:var(--brand)}
+.done p{color:var(--soft)}
+.note{font-size:14px;color:var(--soft);margin-top:14px}
+pre{background:var(--bg);padding:14px;border-radius:12px;white-space:pre-wrap;font-size:14px;text-align:left}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{background:rgba(255,255,255,.16);color:#fff;min-height:44px}
+.tabs button[aria-pressed=true]{background:#fff;color:var(--brand)}
+.stats{display:flex;gap:28px;flex-wrap:wrap}
+.stat b{display:block;font:800 34px/1 Outfit,sans-serif}
+.stat span{font-size:14px;color:var(--soft)}
+.live{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--soft)}
+.live i{width:9px;height:9px;border-radius:50%;background:var(--ok);animation:p 1.6s infinite}
+@keyframes p{50%{opacity:.25}}
+@media(prefers-reduced-motion:reduce){.live i{animation:none}.opt span{transition:none}}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-weight:600;color:var(--soft);white-space:nowrap}
+td.n{text-align:right;font-weight:700;white-space:nowrap}
+.a{display:inline-block;padding:2px 8px;border-radius:8px;white-space:nowrap}
+.a.y{background:var(--okbg);color:var(--ok)}.a.x{background:var(--badbg);color:var(--bad)}
+.empty{text-align:center;padding:40px 10px;color:var(--soft)}
+.hide{display:none!important}
+@media(max-width:600px){table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;white-space:normal;color:var(--soft)}.stack td:empty{display:none}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<header class="top">
+  <div class="wrap" id="hwrap">
+    <h1 id="title">Quick general knowledge quiz</h1>
+    <p id="sub">Seven short questions. Enter your name, answer each one, and press Submit.</p>
+  </div>
+</header>
+
+<main>
+  <div class="wrap" id="quizWrap">
+    <form class="sheet" id="quiz" novalidate>
+      <label class="f" for="name">Your name</label>
+      <input type="text" id="name" autocomplete="name" maxlength="80" required>
+      <div id="qs"></div>
+      <p class="err" id="err" role="alert"></p>
+      <button class="go" type="submit" id="submit">Submit answers</button>
+      
+    </form>
+    <section class="sheet done hide" id="done" aria-live="polite">
+      <h2>Thanks, <span id="dName"></span>!</h2>
+      <div class="score" id="dScore"></div>
+      <p id="dMsg">Your answers have been sent.</p>
+      <div id="fallback" class="hide">
+        <p>Your answers couldn't be sent. Copy them and send them to the quiz host.</p>
+        <pre id="fbText"></pre>
+        <button type="button" class="ghost" id="copyFb">Copy my answers</button>
+      </div>
+      <button type="button" class="ghost" id="again" style="margin-top:16px">Answer again</button>
+    </section>
+  </div>
+</main>
+
+<script>
+{
+/* ===== EDIT YOUR QUESTIONS HERE =====
+   mcq: options + answer (must match one option exactly)
+   blank: text with ___ where the blank goes, accept = list of correct answers (case is ignored)
+   tf: answer true or false */
+const QUESTIONS = [
+  {id:"m1", type:"mcq", text:"Which planet is known as the Red Planet?", options:["Venus","Mars","Jupiter","Mercury"], answer:"Mars"},
+  {id:"m2", type:"mcq", text:"What is the largest ocean on Earth?", options:["Atlantic","Indian","Arctic","Pacific"], answer:"Pacific"},
+  {id:"m3", type:"mcq", text:"How many continents are there?", options:["5","6","7","8"], answer:"7"},
+  {id:"b1", type:"blank", text:"The capital city of Japan is ___.", accept:["Tokyo"]},
+  {id:"b2", type:"blank", text:"Water freezes at ___ degrees Celsius.", accept:["0","zero"]},
+  {id:"t1", type:"tf", text:"The Sun is a star.", answer:true},
+  {id:"t2", type:"tf", text:"Sound travels faster than light.", answer:false}
+];
+const SECTIONS = {mcq:"Multiple choice", blank:"Fill in the blanks", tf:"True or false"};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s ?? "").trim().toLowerCase().replace(/\s+/g," ").replace(/[.!]$/,"");
+
+function isRight(q, a){
+  if (a == null || a === "") return false;
+  if (q.type === "mcq") return a === q.answer;
+  if (q.type === "tf") return a === String(q.answer);
+  return q.accept.some(x => norm(x) === norm(a));
+}
+function scoreOf(ans){ return QUESTIONS.reduce((n,q)=> n + (isRight(q, ans[q.id]) ? 1 : 0), 0); }
+function shown(q, a){ if (a == null || a === "") return "(blank)"; if (q.type==="tf") return a==="true"?"True":"False"; return a; }
+
+/* render quiz */
+let last = "", num = 0;
+$("qs").innerHTML = QUESTIONS.map(q => {
+  num++;
+  let head = q.type !== last ? `<p class="sec">${SECTIONS[q.type]}</p>` : "";
+  last = q.type;
+  const qtext = q.type === "blank" ? esc(q.text).replace("___", '<span class="blank"></span>') : esc(q.text);
+  let body;
+  if (q.type === "blank") body = `<input type="text" name="${q.id}" aria-label="Answer to question ${num}" autocomplete="off" maxlength="120">`;
+  else {
+    const opts = q.type === "tf" ? [["true","True"],["false","False"]] : q.options.map(o=>[o,o]);
+    body = `<div class="opts" role="radiogroup">` + opts.map(([v,l]) =>
+      `<label class="opt"><input type="radio" name="${q.id}" value="${esc(v)}"><span>${esc(l)}</span></label>`).join("") + `</div>`;
+  }
+  return `${head}<div class="q"><p class="qt"><b>${num}</b><span>${qtext}</span></p>${body}</div>`;
+}).join("");
+
+function collect(){
+  const f = $("quiz"), ans = {};
+  for (const q of QUESTIONS) {
+    if (q.type === "blank") ans[q.id] = f.elements[q.id].value.trim().slice(0,120);
+    else { const c = f.querySelector(`input[name="${q.id}"]:checked`); ans[q.id] = c ? c.value : ""; }
+  }
+  return ans;
+}
+
+const FORMSPREE_ID = "YOUR_FORM_ID"; /* <-- paste your Formspree form ID here */
+
+function showDone(name, ans, saved){
+  $("quiz").classList.add("hide"); $("done").classList.remove("hide");
+  $("dName").textContent = name;
+  $("dScore").textContent = scoreOf(ans) + " / " + QUESTIONS.length;
+  $("dMsg").classList.toggle("hide", !saved);
+  $("fallback").classList.toggle("hide", saved);
+  if (!saved) $("fbText").textContent = "Name: " + name + "\n" + QUESTIONS.map((q,i)=> (i+1)+". "+q.text+"  "+shown(q, ans[q.id])).join("\n");
+  window.scrollTo({top:0});
+}
+
+$("quiz").addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = $("name").value.trim().slice(0,80);
+  const ans = collect();
+  if (!name) { $("err").textContent = "Please enter your name first."; $("name").focus(); return; }
+  const missing = QUESTIONS.filter(q => !ans[q.id]).length;
+  if (missing && !$("submit").dataset.warned) { $("err").textContent = missing + " question" + (missing>1?"s are":" is") + " unanswered. Press Submit again to send anyway."; $("submit").dataset.warned = "1"; return; }
+  $("err").textContent = "";
+  $("submit").disabled = true; $("submit").textContent = "Sending…";
+  try {
+    const body = {Name: name, Score: scoreOf(ans) + " / " + QUESTIONS.length, _subject: "Quiz answers from " + name};
+    QUESTIONS.forEach((q,i) => body["Q" + (i+1) + " " + q.text] = shown(q, ans[q.id]) + (isRight(q, ans[q.id]) ? "  (correct)" : "  (wrong)"));
+    const r = await fetch("https://formspree.io/f/" + FORMSPREE_ID, {method:"POST", headers:{"Accept":"application/json","Content-Type":"application/json"}, body: JSON.stringify(body)});
+    showDone(name, ans, r.ok);
+  } catch (err) {
+    showDone(name, ans, false);
+  } finally { $("submit").disabled = false; $("submit").textContent = "Submit answers"; }
+});
+$("again").addEventListener("click", () => { $("done").classList.add("hide"); $("quiz").classList.remove("hide"); delete $("submit").dataset.warned; });
+async function copy(text, btn){ const old = btn.textContent; try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; } catch { btn.textContent = "Copy failed: select the text instead"; } setTimeout(()=> btn.textContent = old, 2200); }
+$("copyFb").addEventListener("click", e => copy($("fbText").textContent, e.currentTarget));
+
+}
+</script>
+</body>
+</html>
