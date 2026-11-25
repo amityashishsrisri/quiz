@@ -9,7 +9,7 @@
 <style>
 /* VOICE: friendly, quick, classroom-clear.
    IDEA: an answer sheet handed out at the door, marked in coloured pencil.
-   PICTURE: the quiz itself, one calm column; answers go to Formspree.
+   PICTURE: the quiz itself, one calm column; answers go to FormSubmit.
    COLOUR and TYPE: indigo ink on white paper, coral pencil accent, mint for correct. Outfit + Inter.
    LAYOUT: one column up to 720px for the quiz; wide table for responses. */
 :root{color-scheme:light dark;
@@ -167,7 +167,7 @@ function collect(){
   return ans;
 }
 
-const FORMSPREE_ID = "YOUR_FORM_ID"; /* <-- paste your Formspree form ID here */
+const FORM_TO = ""; /* FormSubmit address: your email, or the private code FormSubmit gives you after activation */
 
 function showDone(name, ans, saved){
   $("quiz").classList.add("hide"); $("done").classList.remove("hide");
@@ -191,7 +191,9 @@ $("quiz").addEventListener("submit", async e => {
   try {
     const body = {Name: name, Score: scoreOf(ans) + " / " + QUESTIONS.length, _subject: "Quiz answers from " + name};
     QUESTIONS.forEach((q,i) => body["Q" + (i+1) + " " + q.text] = shown(q, ans[q.id]) + (isRight(q, ans[q.id]) ? "  (correct)" : "  (wrong)"));
-    const r = await fetch("https://formspree.io/f/" + FORMSPREE_ID, {method:"POST", headers:{"Accept":"application/json","Content-Type":"application/json"}, body: JSON.stringify(body)});
+    if (!FORM_TO) throw new Error("not set up");
+    body._template = "table"; body._captcha = "false";
+    const r = await fetch("https://formsubmit.co/ajax/" + FORM_TO, {method:"POST", headers:{"Accept":"application/json","Content-Type":"application/json"}, body: JSON.stringify(body)});
     showDone(name, ans, r.ok);
   } catch (err) {
     showDone(name, ans, false);
