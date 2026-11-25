@@ -109,6 +109,17 @@ td.n{text-align:right;font-weight:700;white-space:nowrap}
       <button type="button" class="ghost" id="again" style="margin-top:16px">Answer again</button>
     </section>
   </div>
+
+  <div class="wrap hide" id="setupWrap">
+    <form class="sheet" id="setup" novalidate>
+      <h2>One-time setup</h2>
+      <p>Type the email that should receive quiz answers and press Send. FormSubmit will email you an Activate button. Click it, and that email will also give you a private code to use in place of your address.</p>
+      <label class="f" for="setupEmail">Your email</label>
+      <input type="text" id="setupEmail" inputmode="email" autocomplete="email">
+      <button class="go" type="submit" id="setupBtn">Send activation email</button>
+      <p class="err" id="setupMsg" role="status"></p>
+    </form>
+  </div>
 </main>
 
 <script>
@@ -198,6 +209,20 @@ $("quiz").addEventListener("submit", async e => {
   } catch (err) {
     showDone(name, ans, false);
   } finally { $("submit").disabled = false; $("submit").textContent = "Submit answers"; }
+});
+
+/* one-time setup at #setup: the email is typed here, never stored in the page */
+if (location.hash === "#setup") { $("quizWrap").classList.add("hide"); $("setupWrap").classList.remove("hide"); }
+$("setup").addEventListener("submit", async e => {
+  e.preventDefault();
+  const em = $("setupEmail").value.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { $("setupMsg").textContent = "Please enter a valid email."; return; }
+  $("setupBtn").disabled = true; $("setupMsg").textContent = "Sending…";
+  try {
+    const r = await fetch("https://formsubmit.co/ajax/" + encodeURIComponent(em), {method:"POST", headers:{"Accept":"application/json","Content-Type":"application/json"}, body: JSON.stringify({_subject:"Quiz setup", Note:"Setup test from the quiz page"})});
+    $("setupMsg").textContent = r.ok ? "Sent. Check your inbox (and spam) for the FormSubmit activation email." : "FormSubmit didn't accept it. Try again in a minute.";
+  } catch { $("setupMsg").textContent = "Couldn't reach FormSubmit. Check your connection and try again."; }
+  $("setupBtn").disabled = false;
 });
 $("again").addEventListener("click", () => { $("done").classList.add("hide"); $("quiz").classList.remove("hide"); delete $("submit").dataset.warned; });
 async function copy(text, btn){ const old = btn.textContent; try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; } catch { btn.textContent = "Copy failed: select the text instead"; } setTimeout(()=> btn.textContent = old, 2200); }
