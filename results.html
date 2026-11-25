@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz results</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: friendly, quick, classroom-clear.
+   IDEA: an answer sheet handed out at the door, marked in coloured pencil.
+   PICTURE: the quiz itself, one calm column; answers go to FormSubmit.
+   COLOUR and TYPE: indigo ink on white paper, coral pencil accent, mint for correct. Outfit + Inter.
+   LAYOUT: one column up to 720px for the quiz; wide table for responses. */
+:root{color-scheme:light dark;
+--bg:light-dark(#eef0fb,#0d1024);--paper:light-dark(#ffffff,#171b36);--ink:light-dark(#151a3d,#e9ebff);
+--soft:light-dark(#5b6190,#a5aad6);--line:light-dark(#dcdff2,#2a2f55);--brand:light-dark(#3446d4,#8f9bff);
+--accent:light-dark(#ff5a36,#ff7a5c);--ok:light-dark(#0f8a5f,#4fd19e);--okbg:light-dark(#e3f7ee,#123526);
+--bad:light-dark(#c4322a,#ff8a80);--badbg:light-dark(#fdebea,#3a1717)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:Outfit,Inter,sans-serif;line-height:1.1;margin:0;text-wrap:balance}
+h1{font-size:clamp(32px,6vw,46px);font-weight:800}
+h2{font-size:22px;font-weight:700}
+.top{background:var(--brand);color:#fff;padding:clamp(28px,5vw,56px) max(5vw,16px) clamp(56px,7vw,84px)}
+.top p{margin:8px 0 0;opacity:.9;max-width:60ch}
+.wrap{max-width:720px;margin:0 auto}
+.wide{max-width:1240px;margin:0 auto}
+main{padding:0 max(5vw,16px) 64px;margin-top:-44px}
+.sheet{background:var(--paper);border-radius:18px;box-shadow:0 1px 0 var(--line),0 18px 40px -24px rgba(20,26,80,.45);padding:clamp(20px,4vw,36px)}
+.sec{font:600 14px Inter,sans-serif;color:var(--accent);margin:28px 0 4px}
+.q{padding:18px 0;border-top:1px solid var(--line)}
+.q:first-of-type{border-top:0}
+.qt{font-weight:600;font-size:17px;margin:0 0 12px;display:flex;gap:10px}
+.qt b{flex:none;width:28px;height:28px;border-radius:50%;background:var(--bg);color:var(--brand);display:grid;place-items:center;font:700 14px Outfit,sans-serif}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.opt{position:relative}
+.opt input{position:absolute;opacity:0;inset:0;margin:0}
+.opt span{display:flex;align-items:center;min-height:48px;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .15s,background .15s}
+.opt input:checked+span{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 10%,transparent);font-weight:600}
+.opt input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+label.f{display:block;font-weight:600;margin-bottom:6px}
+input[type=text]{width:100%;font:16px Inter,sans-serif;padding:12px 14px;min-height:48px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink)}
+input[type=text]:focus-visible{outline:3px solid var(--accent);outline-offset:1px;border-color:var(--brand)}
+.blank{display:inline-block;width:5em;border-bottom:2px solid var(--soft);margin:0 4px}
+button{font:600 16px Inter,sans-serif;min-height:48px;padding:0 22px;border-radius:12px;border:0;cursor:pointer}
+.go{background:var(--accent);color:#fff;width:100%;margin-top:20px;font-size:17px}
+.go:disabled{opacity:.6;cursor:wait}
+.ghost{background:transparent;color:var(--brand);border:1.5px solid var(--line)}
+button:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.err{color:var(--bad);font-weight:600;margin:10px 0 0;min-height:1.5em}
+.done{text-align:center;padding:24px 0}
+.score{font:800 clamp(56px,14vw,96px)/1 Outfit,sans-serif;color:var(--brand)}
+.done p{color:var(--soft)}
+.note{font-size:14px;color:var(--soft);margin-top:14px}
+pre{background:var(--bg);padding:14px;border-radius:12px;white-space:pre-wrap;font-size:14px;text-align:left}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{background:rgba(255,255,255,.16);color:#fff;min-height:44px}
+.tabs button[aria-pressed=true]{background:#fff;color:var(--brand)}
+.stats{display:flex;gap:28px;flex-wrap:wrap}
+.stat b{display:block;font:800 34px/1 Outfit,sans-serif}
+.stat span{font-size:14px;color:var(--soft)}
+.live{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--soft)}
+.live i{width:9px;height:9px;border-radius:50%;background:var(--ok);animation:p 1.6s infinite}
+@keyframes p{50%{opacity:.25}}
+@media(prefers-reduced-motion:reduce){.live i{animation:none}.opt span{transition:none}}
+.opts.one{grid-template-columns:minmax(0,1fr)}
+.opt em{font-style:normal;font-weight:700;color:var(--brand);margin-right:10px;flex:none}
+code{font:14px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--bg);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+pre.code{background:light-dark(#151a3d,#0a0c1c);color:#e9ebff;padding:14px 16px;border-radius:12px;overflow-x:auto;margin:0 0 12px;white-space:pre}
+pre.code code{background:none;padding:0;color:inherit}
+#review{text-align:left;margin-top:20px}
+.rv{border-top:1px solid var(--line);padding:12px 0}.rv p{margin:4px 0;color:var(--ink)}.rv .ex{color:var(--soft);font-size:15px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-weight:600;color:var(--soft);white-space:nowrap}
+td.n{text-align:right;font-weight:700;white-space:nowrap}
+.a{display:inline-block;padding:2px 8px;border-radius:8px;white-space:nowrap}
+.a.y{background:var(--okbg);color:var(--ok)}.a.x{background:var(--badbg);color:var(--bad)}
+.empty{text-align:center;padding:40px 10px;color:var(--soft)}
+.hide{display:none!important}
+@media(max-width:600px){table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;white-space:normal;color:var(--soft)}.stack td:empty{display:none}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<header class="top">
+  <div class="wide">
+    <h1>Quiz results</h1>
+    <p>Scores appear here as people submit. This page refreshes itself every 10 seconds.</p>
+  </div>
+</header>
+<main>
+  <div class="wrap" id="keyWrap">
+    <form class="sheet" id="keyForm" novalidate>
+      <label class="f" for="key">Your results key</label>
+      <input type="text" id="key" autocomplete="off">
+      <p class="note">This is the private word you set as RESULTS_KEY in your Apps Script. It's remembered on this device only.</p>
+      <button class="go" type="submit">Show results</button>
+      <p class="err" id="kerr" role="alert"></p>
+    </form>
+  </div>
+  <div class="wide hide" id="resWrap">
+    <section class="sheet">
+      <div class="bar">
+        <div class="stats">
+          <div class="stat"><b id="sCount">0</b><span>responses</span></div>
+          <div class="stat"><b id="sAvg">–</b><span>average score</span></div>
+          <div class="stat"><b id="sTop">–</b><span>top score</span></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <span class="live"><i></i><span id="live">Live</span></span>
+          <button type="button" class="ghost" id="forget">Forget key</button>
+        </div>
+      </div>
+      <div class="scroll" id="tableBox"><p class="empty">Loading…</p></div>
+    </section>
+  </div>
+</main>
+<script>
+{
+const SHEET_URL = ""; /* same Apps Script web app URL as in index.html */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let key = ""; try { key = localStorage.getItem("quizKey") || ""; } catch {}
+let timer = null;
+function render(rows){
+  rows.sort((a,b)=> String(b.submitted).localeCompare(String(a.submitted)));
+  $("sCount").textContent = rows.length;
+  const tot = rows[0] ? rows[0].total : 0;
+  $("sAvg").textContent = rows.length ? (rows.reduce((s,r)=>s+Number(r.score||0),0)/rows.length).toFixed(1) + " / " + tot : "–";
+  $("sTop").textContent = rows.length ? Math.max(...rows.map(r=>Number(r.score||0))) + " / " + tot : "–";
+  if (!rows.length) { $("tableBox").innerHTML = '<p class="empty">No responses yet. Share the quiz link and scores will appear here.</p>'; return; }
+  const n = Math.max(...rows.map(r => (r.answers||[]).length));
+  const head = '<tr><th>Name</th><th>Score</th>' + Array.from({length:n},(_,i)=>'<th>Q'+(i+1)+'</th>').join('') + '<th>Submitted</th></tr>';
+  const body = rows.map(r => '<tr><td><strong>' + esc(r.name || "No name") + '</strong></td><td class="n">' + esc(r.score) + ' / ' + esc(r.total) + '</td>' +
+    Array.from({length:n},(_,i)=>{ const a = String((r.answers||[])[i] ?? ""); return '<td><span class="a ' + (a.endsWith("✓")?"y":"x") + '">' + esc(a.replace(/ [✓✗]$/,"")) + '</span></td>'; }).join('') +
+    '<td style="white-space:nowrap">' + esc(r.submitted ? new Date(r.submitted).toLocaleString([], {dateStyle:"medium", timeStyle:"short"}) : "") + '</td></tr>').join('');
+  $("tableBox").innerHTML = '<table class="stack"><thead>' + head + '</thead><tbody>' + body + '</tbody></table>';
+}
+async function load(){
+  try {
+    const r = await fetch(SHEET_URL + "?key=" + encodeURIComponent(key));
+    const d = await r.json();
+    if (d.error) { stop(); $("kerr").textContent = "That key doesn't match. Check RESULTS_KEY in your Apps Script."; return; }
+    render(d.rows || []);
+    $("live").textContent = "Live, updated " + new Date().toLocaleTimeString([], {timeStyle:"short"});
+  } catch { $("live").textContent = "Couldn't reach your Google Sheet. Retrying…"; }
+}
+function start(){ $("keyWrap").classList.add("hide"); $("resWrap").classList.remove("hide"); load(); timer = setInterval(load, 10000); }
+function stop(){ clearInterval(timer); $("resWrap").classList.add("hide"); $("keyWrap").classList.remove("hide"); }
+$("keyForm").addEventListener("submit", e => { e.preventDefault(); key = $("key").value.trim(); if (!key) return; try { localStorage.setItem("quizKey", key); } catch {} $("kerr").textContent = ""; start(); });
+$("forget").addEventListener("click", () => { try { localStorage.removeItem("quizKey"); } catch {} key = ""; $("key").value = ""; stop(); });
+if (!SHEET_URL) { $("kerr").textContent = "Results aren't connected yet. The Google Sheet link still needs to be added."; }
+else if (key) start();
+}
+</script>
+</body>
+</html>

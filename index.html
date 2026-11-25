@@ -204,6 +204,7 @@ function collect(){
   return ans;
 }
 
+const SHEET_URL = ""; /* Google Apps Script web app URL (ends in /exec): saves answers to your Google Sheet */
 const FORM_TO = ""; /* FormSubmit address: your email, or the private code FormSubmit gives you after activation */
 
 function showDone(name, ans, saved){
@@ -232,10 +233,18 @@ $("quiz").addEventListener("submit", async e => {
   try {
     const body = {Name: name, Score: scoreOf(ans) + " / " + QUESTIONS.length, _subject: "Quiz answers from " + name};
     QUESTIONS.forEach((q,i) => body["Q" + (i+1) + " " + plain(q.text)] = shown(q, ans[q.id]) + (isRight(q, ans[q.id]) ? "  (correct)" : "  (wrong)"));
-    if (!FORM_TO) throw new Error("not set up");
-    body._template = "table"; body._captcha = "false";
-    const r = await fetch("https://formsubmit.co/ajax/" + FORM_TO, {method:"POST", headers:{"Accept":"application/json","Content-Type":"application/json"}, body: JSON.stringify(body)});
-    showDone(name, ans, r.ok);
+    let ok = false;
+    if (SHEET_URL) {
+      const row = {name, score: scoreOf(ans), total: QUESTIONS.length, answers: QUESTIONS.map(q => shown(q, ans[q.id]) + (isRight(q, ans[q.id]) ? " ✓" : " ✗"))};
+      await fetch(SHEET_URL, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(row)});
+      ok = true;
+    }
+    if (FORM_TO) {
+      body._template = "table"; body._captcha = "false";
+      const r = await fetch("https://formsubmit.co/ajax/" + FORM_TO, {method:"POST", headers:{"Accept":"application/json","Content-Type":"application/json"}, body: JSON.stringify(body)});
+      ok = ok || r.ok;
+    }
+    showDone(name, ans, ok);
   } catch (err) {
     showDone(name, ans, false);
   } finally { $("submit").disabled = false; $("submit").textContent = "Submit answers"; }
