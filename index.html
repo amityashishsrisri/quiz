@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Quick Quiz</title>
+<title>Python and TOK quiz</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -66,6 +66,13 @@ pre{background:var(--bg);padding:14px;border-radius:12px;white-space:pre-wrap;fo
 .live i{width:9px;height:9px;border-radius:50%;background:var(--ok);animation:p 1.6s infinite}
 @keyframes p{50%{opacity:.25}}
 @media(prefers-reduced-motion:reduce){.live i{animation:none}.opt span{transition:none}}
+.opts.one{grid-template-columns:minmax(0,1fr)}
+.opt em{font-style:normal;font-weight:700;color:var(--brand);margin-right:10px;flex:none}
+code{font:14px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--bg);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+pre.code{background:light-dark(#151a3d,#0a0c1c);color:#e9ebff;padding:14px 16px;border-radius:12px;overflow-x:auto;margin:0 0 12px;white-space:pre}
+pre.code code{background:none;padding:0;color:inherit}
+#review{text-align:left;margin-top:20px}
+.rv{border-top:1px solid var(--line);padding:12px 0}.rv p{margin:4px 0;color:var(--ink)}.rv .ex{color:var(--soft);font-size:15px}
 .scroll{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
@@ -82,8 +89,8 @@ td.n{text-align:right;font-weight:700;white-space:nowrap}
 <body>
 <header class="top">
   <div class="wrap" id="hwrap">
-    <h1 id="title">Quick general knowledge quiz</h1>
-    <p id="sub">Seven short questions. Enter your name, answer each one, and press Submit.</p>
+    <h1 id="title">Python and TOK quiz</h1>
+    <p id="sub">Enter your name, answer each question, and press Submit.</p>
   </div>
 </header>
 
@@ -106,6 +113,7 @@ td.n{text-align:right;font-weight:700;white-space:nowrap}
         <pre id="fbText"></pre>
         <button type="button" class="ghost" id="copyFb">Copy my answers</button>
       </div>
+      <div id="review"></div>
       <button type="button" class="ghost" id="again" style="margin-top:16px">Answer again</button>
     </section>
   </div>
@@ -125,22 +133,37 @@ td.n{text-align:right;font-weight:700;white-space:nowrap}
 <script>
 {
 /* ===== EDIT YOUR QUESTIONS HERE =====
-   mcq: options + answer (must match one option exactly)
-   blank: text with ___ where the blank goes, accept = list of correct answers (case is ignored)
-   tf: answer true or false */
+   section: heading shown above the question (a new heading appears whenever it changes)
+   type "mcq": options + answer (the letter of the correct option); text in `backticks` shows as code
+   type "blank": text with ___ where the blank goes, accept = list of correct answers (case is ignored)
+   type "tf": answer true or false
+   code: optional code block shown under the question; explain: shown after submitting */
 const QUESTIONS = [
-  {id:"m1", type:"mcq", text:"Which planet is known as the Red Planet?", options:["Venus","Mars","Jupiter","Mercury"], answer:"Mars"},
-  {id:"m2", type:"mcq", text:"What is the largest ocean on Earth?", options:["Atlantic","Indian","Arctic","Pacific"], answer:"Pacific"},
-  {id:"m3", type:"mcq", text:"How many continents are there?", options:["5","6","7","8"], answer:"7"},
-  {id:"b1", type:"blank", text:"The capital city of Japan is ___.", accept:["Tokyo"]},
-  {id:"b2", type:"blank", text:"Water freezes at ___ degrees Celsius.", accept:["0","zero"]},
-  {id:"t1", type:"tf", text:"The Sun is a star.", answer:true},
-  {id:"t2", type:"tf", text:"Sound travels faster than light.", answer:false}
+  {id:"q1", section:"Section A: Exception handling (Python)", type:"mcq",
+   text:"What will be the output of the following code?",
+   code:'try:\n    num = int("25A")\n    print(num)\nexcept ValueError:\n    print("Invalid input")\nfinally:\n    print("Program ended")',
+   options:{A:"`25A`", B:"`Invalid input`", C:"`Program ended`", D:"`Invalid input` followed by `Program ended`"}, answer:"D",
+   explain:"Converting `\"25A\"` into an integer raises a `ValueError`. The `except` block handles it, and the `finally` block executes afterwards."},
+  {id:"q2", section:"Section A: Exception handling (Python)", type:"mcq",
+   text:"Which exception is raised when a program attempts to access a list element using an invalid index?",
+   options:{A:"`ValueError`", B:"`TypeError`", C:"`IndexError`", D:"`NameError`"}, answer:"C",
+   explain:"An `IndexError` occurs when an index is outside the valid range of a list or sequence."},
+  {id:"q3", section:"Section B: Theory of Knowledge (TOK)", type:"mcq",
+   text:"A computer program passes 1,000 test cases. What can we conclude about its correctness?",
+   options:{A:"The program is certainly correct.", B:"The program is correct for every possible input.", C:"The tests provide evidence of correctness, but do not guarantee it.", D:"The program does not contain any errors."}, answer:"C",
+   explain:"Testing provides evidence, but it is impossible to test every possible input and situation in many real-world programs. This connects to the TOK concept of Evidence and Certainty."},
+  {id:"q4", section:"Section B: Theory of Knowledge (TOK)", type:"mcq",
+   text:"A developer considers a program correct because it produces the expected output. However, a user argues that it is incorrect because it does not handle invalid inputs safely. Which TOK concept is most relevant?",
+   options:{A:"Culture", B:"Perspective", C:"Power", D:"Truth"}, answer:"B",
+   explain:"The developer and user evaluate correctness from different perspectives. This raises the question of whether correctness depends only on technical output or also on user needs and expectations."}
 ];
-const SECTIONS = {mcq:"Multiple choice", blank:"Fill in the blanks", tf:"True or false"};
+const QUIZ_TITLE = "Python and TOK quiz";
+const QUIZ_INTRO = "Enter your name, answer each question, and press Submit.";
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const md = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
+const plain = s => String(s ?? "").replace(/`/g, "");
 const norm = s => String(s ?? "").trim().toLowerCase().replace(/\s+/g," ").replace(/[.!]$/,"");
 
 function isRight(q, a){
@@ -150,23 +173,26 @@ function isRight(q, a){
   return q.accept.some(x => norm(x) === norm(a));
 }
 function scoreOf(ans){ return QUESTIONS.reduce((n,q)=> n + (isRight(q, ans[q.id]) ? 1 : 0), 0); }
-function shown(q, a){ if (a == null || a === "") return "(blank)"; if (q.type==="tf") return a==="true"?"True":"False"; return a; }
+function shown(q, a){ if (a == null || a === "") return "(blank)"; if (q.type==="tf") return a==="true"?"True":"False"; if (q.type==="mcq") return a + ". " + plain(q.options[a]); return a; }
 
 /* render quiz */
+document.title = QUIZ_TITLE; $("title").textContent = QUIZ_TITLE; $("sub").textContent = QUIZ_INTRO;
 let last = "", num = 0;
 $("qs").innerHTML = QUESTIONS.map(q => {
   num++;
-  let head = q.type !== last ? `<p class="sec">${SECTIONS[q.type]}</p>` : "";
-  last = q.type;
-  const qtext = q.type === "blank" ? esc(q.text).replace("___", '<span class="blank"></span>') : esc(q.text);
+  const sec = q.section || "";
+  const head = sec && sec !== last ? `<p class="sec">${esc(sec)}</p>` : "";
+  last = sec;
+  const qtext = q.type === "blank" ? md(q.text).replace("___", '<span class="blank"></span>') : md(q.text);
+  const code = q.code ? `<pre class="code"><code>${esc(q.code)}</code></pre>` : "";
   let body;
   if (q.type === "blank") body = `<input type="text" name="${q.id}" aria-label="Answer to question ${num}" autocomplete="off" maxlength="120">`;
   else {
-    const opts = q.type === "tf" ? [["true","True"],["false","False"]] : q.options.map(o=>[o,o]);
-    body = `<div class="opts" role="radiogroup">` + opts.map(([v,l]) =>
-      `<label class="opt"><input type="radio" name="${q.id}" value="${esc(v)}"><span>${esc(l)}</span></label>`).join("") + `</div>`;
+    const opts = q.type === "tf" ? [["true","True"],["false","False"]] : Object.entries(q.options).map(([k,v])=>[k, `<em>${esc(k)}</em>${md(v)}`]);
+    body = `<div class="opts${q.type==="mcq"?" one":""}" role="radiogroup">` + opts.map(([v,l]) =>
+      `<label class="opt"><input type="radio" name="${q.id}" value="${esc(v)}"><span>${q.type==="tf"?esc(l):l}</span></label>`).join("") + `</div>`;
   }
-  return `${head}<div class="q"><p class="qt"><b>${num}</b><span>${qtext}</span></p>${body}</div>`;
+  return `${head}<div class="q"><p class="qt"><b>${num}</b><span>${qtext}</span></p>${code}${body}</div>`;
 }).join("");
 
 function collect(){
@@ -185,8 +211,12 @@ function showDone(name, ans, saved){
   $("dName").textContent = name;
   $("dScore").textContent = scoreOf(ans) + " / " + QUESTIONS.length;
   $("dMsg").classList.toggle("hide", !saved);
+  $("review").innerHTML = QUESTIONS.map((q,i) => { const ok = isRight(q, ans[q.id]);
+    const right = q.type==="mcq" ? q.answer + ". " + plain(q.options[q.answer]) : q.type==="tf" ? (q.answer?"True":"False") : q.accept[0];
+    return `<div class="rv"><p><strong>Q${i+1}.</strong> <span class="a ${ok?"y":"x"}">${ok?"Correct":"Your answer: "+esc(shown(q, ans[q.id]))}</span></p>` +
+      (ok ? "" : `<p>Correct answer: <strong>${esc(right)}</strong></p>`) + (q.explain ? `<p class="ex">${md(q.explain)}</p>` : "") + `</div>`; }).join("");
   $("fallback").classList.toggle("hide", saved);
-  if (!saved) $("fbText").textContent = "Name: " + name + "\n" + QUESTIONS.map((q,i)=> (i+1)+". "+q.text+"  "+shown(q, ans[q.id])).join("\n");
+  if (!saved) $("fbText").textContent = "Name: " + name + "\n" + QUESTIONS.map((q,i)=> (i+1)+". "+plain(q.text)+"  "+shown(q, ans[q.id])).join("\n");
   window.scrollTo({top:0});
 }
 
@@ -201,7 +231,7 @@ $("quiz").addEventListener("submit", async e => {
   $("submit").disabled = true; $("submit").textContent = "Sending…";
   try {
     const body = {Name: name, Score: scoreOf(ans) + " / " + QUESTIONS.length, _subject: "Quiz answers from " + name};
-    QUESTIONS.forEach((q,i) => body["Q" + (i+1) + " " + q.text] = shown(q, ans[q.id]) + (isRight(q, ans[q.id]) ? "  (correct)" : "  (wrong)"));
+    QUESTIONS.forEach((q,i) => body["Q" + (i+1) + " " + plain(q.text)] = shown(q, ans[q.id]) + (isRight(q, ans[q.id]) ? "  (correct)" : "  (wrong)"));
     if (!FORM_TO) throw new Error("not set up");
     body._template = "table"; body._captcha = "false";
     const r = await fetch("https://formsubmit.co/ajax/" + FORM_TO, {method:"POST", headers:{"Accept":"application/json","Content-Type":"application/json"}, body: JSON.stringify(body)});
